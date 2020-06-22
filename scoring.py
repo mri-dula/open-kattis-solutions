@@ -1,7 +1,6 @@
 '''
 This is a solution in Python for https://open.kattis.com/problems/includescoring
 '''
-import sys
 import math
 
 
@@ -14,9 +13,8 @@ class Participant:
         self.penalty = penalty
         self.submit_timestamp = submit_timestamp
         self.extra_point = extra_point
-        self.rank = -1
+        self.rank = None
         self.score = None
-        self.did_not_participate = problems_solved == 0 and penalty == 0 and submit_timestamp == 0 and extra_point == 0
 
     def is_tied_with(self, participant):
         return self.problems_solved == participant.problems_solved \
@@ -33,18 +31,19 @@ class Contest:
 
     def assign_ranks(self):
         sorted_participants = sorted(self.participants, key=lambda t: (-t.problems_solved, t.penalty, t.submit_timestamp))
-        rank = 1
+        current_rank = 1
         previous_participant = None
                 
         for participant in sorted_participants:
             if previous_participant == None:
-                participant_rank = rank
+                participant_rank = current_rank
             else:
                 if participant.is_tied_with(previous_participant):
                     participant_rank = previous_participant.rank
                 else:
-                    participant_rank = rank + 1
-                    rank = rank + 1
+                    participant_rank = current_rank
+
+            current_rank = current_rank + 1
 
             participant.rank = participant_rank
             previous_participant = participant
@@ -56,9 +55,6 @@ class Contest:
         participant_list = [participant for participant in self.participants]
         participant_list.sort(key=lambda x: x.rank)
         for participant in participant_list:
-            if participant.rank == -1:
-                participant.score = 0
-                continue
             participant.score = self.score_by_rank(participant.rank) + participant.extra_point
             if previous_participant == None:
                 tied_participants.append(participant)
@@ -68,7 +64,8 @@ class Contest:
                 else:
                     tied_participants = [participant]
                 if len(tied_participants) > 1:
-                    average_score = int(math.ceil(sum([float(self.score_by_rank(tied_rank)) for tied_rank in range(participant.rank, participant.rank + len(tied_participants))])/len(tied_participants)))
+                    total_scores = sum([(self.score_by_rank(tied_rank)) for tied_rank in range(participant.rank, participant.rank + len(tied_participants))])
+                    average_score = int(math.ceil((total_scores * 1.0)/len(tied_participants)))
                     for tied_participant in tied_participants:
                         tied_participant.score = average_score + tied_participant.extra_point
             previous_participant = participant
