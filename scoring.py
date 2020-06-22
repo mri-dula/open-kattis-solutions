@@ -32,31 +32,22 @@ class Contest:
         return 0 if rank > 30 else SCORES[rank]
 
     def assign_ranks(self):
-        unique_problems_solved = list(set([participant.problems_solved for participant in self.participants]))
-        unique_problems_solved.sort(key=lambda x: -x)
+        sorted_participants = sorted(self.participants, key=lambda t: (-t.problems_solved, t.penalty, t.submit_timestamp))
         rank = 1
         previous_participant = None
-        for problems_solved in unique_problems_solved:
-            first_order_participants = [participant for participant in self.participants if participant.problems_solved == problems_solved and not participant.did_not_participate]
-            unique_penalties = list(set([participant.penalty for participant in first_order_participants]))
-            unique_penalties.sort()
-            for penalty in unique_penalties:
-                second_order_participants = [participant for participant in first_order_participants if participant.penalty == penalty]
                 
-                second_order_participants.sort(key=lambda x: x.submit_timestamp)
-                
-                for participant in second_order_participants:
-                    if previous_participant == None:
-                        participant_rank = rank
-                    else:
-                        if participant.is_tied_with(previous_participant):
-                            participant_rank = previous_participant.rank
-                        else:
-                            participant_rank = rank + 1
-                            rank = rank + 1
-                            
-                    participant.rank = participant_rank
-                    previous_participant = participant
+        for participant in sorted_participants:
+            if previous_participant == None:
+                participant_rank = rank
+            else:
+                if participant.is_tied_with(previous_participant):
+                    participant_rank = previous_participant.rank
+                else:
+                    participant_rank = rank + 1
+                    rank = rank + 1
+
+            participant.rank = participant_rank
+            previous_participant = participant
 
     def assign_scores(self):
         self.assign_ranks()
